@@ -1,0 +1,157 @@
+const baseURL = "http://api.login2explore.com:5577";
+const dbName = "schoolDB";
+const relationName = "STUDENT-TABLE";
+const connToken = "YOUR_CONNECTION_TOKEN";  // <-- replace your token here
+
+function disableAllFields() {
+    document.getElementById("Full-Name").disabled = true;
+    document.getElementById("Class").disabled = true;
+    document.getElementById("Birth-Date").disabled = true;
+    document.getElementById("Address").disabled = true;
+    document.getElementById("Enrollment-Date").disabled = true;
+    document.getElementById("saveBtn").disabled = true;
+    document.getElementById("updateBtn").disabled = true;
+    document.getElementById("resetBtn").disabled = true;
+}
+
+function enableAllFields() {
+    document.getElementById("Full-Name").disabled = false;
+    document.getElementById("Class").disabled = false;
+    document.getElementById("Birth-Date").disabled = false;
+    document.getElementById("Address").disabled = false;
+    document.getElementById("Enrollment-Date").disabled = false;
+    document.getElementById("resetBtn").disabled = false;
+}
+
+function resetForm() {
+    document.getElementById("studentForm").reset();
+    document.getElementById("Roll-No").disabled = false;
+    disableAllFields();
+    document.getElementById("Roll-No").focus();
+}
+
+function checkRollNo() {
+    let rollNo = document.getElementById("Roll-No").value;
+    if (rollNo === "") {
+        alert("Roll No is required!");
+        return;
+    }
+
+    let checkReq = {
+        token: connToken,
+        cmd: "GET_BY_KEY",
+        dbName: dbName,
+        rel: relationName,
+        jsonStr: {
+            "Roll-No": parseInt(rollNo)
+        }
+    };
+
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", baseURL + "/api/irl", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.send(JSON.stringify(checkReq));
+
+    xhr.onload = function () {
+        let res = JSON.parse(xhr.responseText);
+        if (res.status === 400) {
+            enableAllFields();
+            document.getElementById("saveBtn").disabled = false;
+            document.getElementById("Roll-No").disabled = false;
+            document.getElementById("Full-Name").focus();
+        } else {
+            enableAllFields();
+            document.getElementById("updateBtn").disabled = false;
+            document.getElementById("Roll-No").disabled = true;
+
+            let data = JSON.parse(res.data).record;
+            document.getElementById("Full-Name").value = data["Full-Name"];
+            document.getElementById("Class").value = data["Class"];
+            document.getElementById("Birth-Date").value = data["Birth-Date"];
+            document.getElementById("Address").value = data["Address"];
+            document.getElementById("Enrollment-Date").value = data["Enrollment-Date"];
+            document.getElementById("Full-Name").focus();
+        }
+    }
+}
+
+function saveData() {
+    let rollNo = document.getElementById("Roll-No").value;
+    let fullName = document.getElementById("Full-Name").value;
+    let className = document.getElementById("Class").value;
+    let birthDate = document.getElementById("Birth-Date").value;
+    let address = document.getElementById("Address").value;
+    let enrollDate = document.getElementById("Enrollment-Date").value;
+
+    if (fullName === "" || className === "" || birthDate === "" || address === "" || enrollDate === "") {
+        alert("All fields are required!");
+        return;
+    }
+
+    let putReq = {
+        token: connToken,
+        cmd: "PUT",
+        dbName: dbName,
+        rel: relationName,
+        jsonStr: {
+            "Roll-No": parseInt(rollNo),
+            "Full-Name": fullName,
+            "Class": className,
+            "Birth-Date": birthDate,
+            "Address": address,
+            "Enrollment-Date": enrollDate
+        }
+    };
+
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", baseURL + "/api/iml", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.send(JSON.stringify(putReq));
+
+    xhr.onload = function () {
+        alert("Data Saved Successfully!");
+        resetForm();
+    }
+}
+
+function updateData() {
+    let rollNo = document.getElementById("Roll-No").value;
+    let fullName = document.getElementById("Full-Name").value;
+    let className = document.getElementById("Class").value;
+    let birthDate = document.getElementById("Birth-Date").value;
+    let address = document.getElementById("Address").value;
+    let enrollDate = document.getElementById("Enrollment-Date").value;
+
+    if (fullName === "" || className === "" || birthDate === "" || address === "" || enrollDate === "") {
+        alert("All fields are required!");
+        return;
+    }
+
+    let updateReq = {
+        token: connToken,
+        cmd: "UPDATE",
+        dbName: dbName,
+        rel: relationName,
+        jsonStr: {
+            "Roll-No": parseInt(rollNo),
+            "Full-Name": fullName,
+            "Class": className,
+            "Birth-Date": birthDate,
+            "Address": address,
+            "Enrollment-Date": enrollDate
+        },
+        recordExists: "true"
+    };
+
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", baseURL + "/api/iml", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.send(JSON.stringify(updateReq));
+
+    xhr.onload = function () {
+        alert("Data Updated Successfully!");
+        resetForm();
+    }
+}
+
+window.onload = resetForm;
